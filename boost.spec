@@ -28,7 +28,7 @@
 Name: boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.41.0
-Release: 27%{?dist}
+Release: 28%{?dist}
 License: Boost
 URL: http://sodium.resophonic.com/boost-cmake/%{version}.cmake0/
 Group: System Environment/Libraries
@@ -597,21 +597,11 @@ done
 # Remove scripts used to generate include files
 find $RPM_BUILD_ROOT%{_includedir}/ \( -name '*.pl' -o -name '*.sh' \) -exec %{__rm} -f {} \;
 
-# The cmake files installed in /usr/share cause multilib conflicts.
+# The cmake files installed in /usr/share and libdir are not compatible
+# with cmake 2.8 (see #1245805) so don't install them.
 # Install them in /usr/lib{,64} instead.
 %{__rm} -Rf $RPM_BUILD_ROOT%{_datadir}/%{name}-%{version}/cmake
-%{__install} -d $RPM_BUILD_ROOT/%{_libdir}/boost
-%{__install} -p -m 644 -t $RPM_BUILD_ROOT/%{_libdir}/boost \
-	     ./serial/CMakeFiles/BoostConfig.cmake \
-	     ./serial/CMakeFiles/BoostConfigVersion.cmake
-# Also put there the files that are now in libdir, so that it's all in
-# one place
-find $RPM_BUILD_ROOT/%{_libdir} -name '*.cmake' \
-     -exec %{__mv} {} $RPM_BUILD_ROOT/%{_libdir}/boost/ \;
-# And adjust the include path in BoostConfig.cmake
-sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
-    $RPM_BUILD_ROOT/%{_libdir}/boost/BoostConfig.cmake
-
+%{__rm} -f $RPM_BUILD_ROOT/%{_libdir}/*.cmake
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
@@ -760,7 +750,6 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 %{_includedir}/%{name}
 %{_libdir}/libboost_*.so
 %{_datadir}/%{name}-%{version}
-%{_libdir}/boost/Boost*.cmake
 
 %files static
 %defattr(-, root, root, -)
@@ -830,6 +819,10 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 %endif
 
 %changelog
+* Wed Dec 23 2015 Jonathan Wakely <jwakely@redhat.com> 1.41.0-28
+- Don't install .cmake files.
+- Resolves: #1245805
+
 * Wed Feb  4 2015 Petr Machata <pmachata@redhat.com> - 1.41.0-27
 - Fix the way MPI_VERSION is compared with (>=2 rather than ==2) so
   that an arg-less boost::mpi::environment ctor is exposed for MPI
