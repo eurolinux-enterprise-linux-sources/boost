@@ -28,7 +28,7 @@
 Name: boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.41.0
-Release: 17%{?dist}
+Release: 18%{?dist}
 License: Boost
 URL: http://sodium.resophonic.com/boost-cmake/%{version}.cmake0/
 Group: System Environment/Libraries
@@ -93,6 +93,10 @@ Patch5: boost-1.41.0-pool.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=908774
 Patch6: boost-1.41.0-exception_ptr.patch
 
+# https://bugzilla.redhat.com/show_bug.cgi?id=820670
+# (https://bugzilla.redhat.com/show_bug.cgi?id=771370)
+Patch7: boost-1.48.0-mathlib.patch
+
 %bcond_with tests
 %bcond_with docs_generated
 
@@ -147,15 +151,13 @@ Runtime support for Boost.IOStreams, a framework for defining streams,
 stream buffers and i/o filters.
 
 %package math
-Summary: Stub that used to contain boost math library
+Summary: Math functions for boost TR1 library
 Group: System Environment/Libraries
 
 %description math
 
-This package is a stub that used to contain runtime component of boost
-math library.  Now that boost math library is header-only, this
-package is empty.  It's kept around only so that during yum-assisted
-update, old libraries from boost-math package aren't left around.
+Run-Time support for C99 and C++ TR1 C-style Functions from math
+portion of Boost.TR1.
 
 %package program-options
 Summary:  Runtime component of boost program_options library
@@ -400,6 +402,7 @@ sed 's/_FEDORA_SONAME/%{sonamever}/' %{PATCH0} | %{__patch} -p0 --fuzz=0
 %patch4 -p2
 %patch5 -p1
 %patch6 -p0
+%patch7 -p1
 
 %build
 # Support for building tests.
@@ -655,6 +658,9 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 %{_libdir}/libboost_iostreams*.so.%{sonamever}
 
 %files math
+%defattr(-, root, root, -)
+%doc LICENSE_1_0.txt
+%{_libdir}/libboost_math*.so.%{sonamever}
 
 %files test
 %defattr(-, root, root, -)
@@ -781,6 +787,10 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 %endif
 
 %changelog
+* Tue Jun  4 2013 Petr Machata <pmachata@redhat.com> - 1.41.0-18
+- Build math portion of Boost.TR1, package DSOs in boost-math.
+  (boost-1.48.0-mathlib.patch)
+
 * Thu Mar 14 2013 Petr Machata <pmachata@redhat.com> - 1.41.0-17
 - Add in explicit dependence between boost-*mpich2* and
   boost-serialization.
