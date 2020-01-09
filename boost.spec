@@ -28,7 +28,7 @@
 Name: boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.41.0
-Release: 25%{?dist}
+Release: 27%{?dist}
 License: Boost
 URL: http://sodium.resophonic.com/boost-cmake/%{version}.cmake0/
 Group: System Environment/Libraries
@@ -57,19 +57,19 @@ Source1: __init__.py
 # components, except for MPI sub-packages.  Those are "speacial", one
 # doesn't necessarily need them and the more typical scenario, I
 # think, will be that the developer wants to pick one MPI flavor.
-Requires: boost-date-time = %{version}-%{release}
-Requires: boost-filesystem = %{version}-%{release}
-Requires: boost-graph = %{version}-%{release}
-Requires: boost-iostreams = %{version}-%{release}
-Requires: boost-program-options = %{version}-%{release}
-Requires: boost-python = %{version}-%{release}
-Requires: boost-regex = %{version}-%{release}
-Requires: boost-serialization = %{version}-%{release}
-Requires: boost-signals = %{version}-%{release}
-Requires: boost-system = %{version}-%{release}
-Requires: boost-test = %{version}-%{release}
-Requires: boost-thread = %{version}-%{release}
-Requires: boost-wave = %{version}-%{release}
+Requires: boost-date-time%{?_isa} = %{version}-%{release}
+Requires: boost-filesystem%{?_isa} = %{version}-%{release}
+Requires: boost-graph%{?_isa} = %{version}-%{release}
+Requires: boost-iostreams%{?_isa} = %{version}-%{release}
+Requires: boost-program-options%{?_isa} = %{version}-%{release}
+Requires: boost-python%{?_isa} = %{version}-%{release}
+Requires: boost-regex%{?_isa} = %{version}-%{release}
+Requires: boost-serialization%{?_isa} = %{version}-%{release}
+Requires: boost-signals%{?_isa} = %{version}-%{release}
+Requires: boost-system%{?_isa} = %{version}-%{release}
+Requires: boost-test%{?_isa} = %{version}-%{release}
+Requires: boost-thread%{?_isa} = %{version}-%{release}
+Requires: boost-wave%{?_isa} = %{version}-%{release}
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: cmake
@@ -121,6 +121,15 @@ Patch16: boost-1.41.0-interprocess-conformance-maxval.patch
 Patch17: boost-1.41.0-circular_buffer-adl.patch
 Patch18: boost-1.41.0-numeric-conformance.patch
 
+# https://bugzilla.redhat.com/show_bug.cgi?id=1169501
+Patch19: boost-1.41.0-mpi-NOARG_INIT.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1167383
+Patch20: boost-1.41.0-interprocess-move.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1170010
+Patch21: boost-1.41.0-weak_ptr-copy.patch
+
 %bcond_with tests
 %bcond_with docs_generated
 
@@ -145,7 +154,7 @@ on generic programming concepts.
 %package filesystem
 Summary: Runtime component of boost filesystem library
 Group: System Environment/Libraries
-Requires: boost-system = %{version}-%{release}
+Requires: boost-system%{?_isa} = %{version}-%{release}
 
 %description filesystem
 
@@ -157,7 +166,7 @@ directories.
 Summary: Runtime component of boost graph library
 Group: System Environment/Libraries
 # boost::graph depends on boost::regex for reading graphviz files.
-Requires: boost-regex = %{version}-%{release}
+Requires: boost-regex%{?_isa} = %{version}-%{release}
 
 %description graph
 
@@ -262,10 +271,10 @@ data specific to individual threads.
 %package wave
 Summary: Runtime component of boost C99/C++ preprocessing library
 Group: System Environment/Libraries
-Requires: boost-date-time = %{version}-%{release}
-Requires: boost-filesystem = %{version}-%{release}
-Requires: boost-system = %{version}-%{release}
-Requires: boost-thread = %{version}-%{release}
+Requires: boost-date-time%{?_isa} = %{version}-%{release}
+Requires: boost-filesystem%{?_isa} = %{version}-%{release}
+Requires: boost-system%{?_isa} = %{version}-%{release}
+Requires: boost-thread%{?_isa} = %{version}-%{release}
 
 %description wave
 
@@ -276,7 +285,7 @@ preprocessor functionality.
 %package devel
 Summary: The Boost C++ headers and shared development libraries
 Group: Development/Libraries
-Requires: boost = %{version}-%{release}
+Requires: boost%{?_isa} = %{version}-%{release}
 Provides: boost-python-devel = %{version}-%{release}
 
 %description devel
@@ -285,7 +294,7 @@ Headers and shared object symlinks for the Boost C++ libraries.
 %package static
 Summary: The Boost C++ static development libraries
 Group: Development/Libraries
-Requires: boost-devel = %{version}-%{release}
+Requires: boost-devel%{?_isa} = %{version}-%{release}
 Obsoletes: boost-devel-static < 1.34.1-14
 Provides: boost-devel-static = %{version}-%{release}
 
@@ -311,9 +320,9 @@ web page (http://www.boost.org/doc/libs/1_40_0).
 %package openmpi
 Summary: Runtime component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: openmpi
+Requires: openmpi%{?_isa}
 BuildRequires: openmpi-devel
-Requires: boost-serialization = %{version}-%{release}
+Requires: boost-serialization%{?_isa} = %{version}-%{release}
 
 %description openmpi
 
@@ -323,10 +332,10 @@ API over the OpenMPI implementation of MPI.
 %package openmpi-devel
 Summary: Shared library symlinks for Boost.MPI
 Group: System Environment/Libraries
-Requires: boost-devel = %{version}-%{release}
-Requires: boost-openmpi = %{version}-%{release}
-Requires: boost-openmpi-python = %{version}-%{release}
-Requires: boost-graph-openmpi = %{version}-%{release}
+Requires: boost-devel%{?_isa} = %{version}-%{release}
+Requires: boost-openmpi%{?_isa} = %{version}-%{release}
+Requires: boost-openmpi-python%{?_isa} = %{version}-%{release}
+Requires: boost-graph-openmpi%{?_isa} = %{version}-%{release}
 
 %description openmpi-devel
 
@@ -336,9 +345,9 @@ API over the OpenMPI implementation of MPI.
 %package openmpi-python
 Summary: Python runtime component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: boost-openmpi = %{version}-%{release}
-Requires: boost-python = %{version}-%{release}
-Requires: boost-serialization = %{version}-%{release}
+Requires: boost-openmpi%{?_isa} = %{version}-%{release}
+Requires: boost-python%{?_isa} = %{version}-%{release}
+Requires: boost-serialization%{?_isa} = %{version}-%{release}
 
 %description openmpi-python
 
@@ -348,8 +357,8 @@ API over the OpenMPI implementation of MPI.
 %package graph-openmpi
 Summary: Runtime component of parallel boost graph library
 Group: System Environment/Libraries
-Requires: boost-openmpi = %{version}-%{release}
-Requires: boost-serialization = %{version}-%{release}
+Requires: boost-openmpi%{?_isa} = %{version}-%{release}
+Requires: boost-serialization%{?_isa} = %{version}-%{release}
 
 %description graph-openmpi
 
@@ -366,9 +375,9 @@ backend to do the parallel work.
 %package mpich
 Summary: Runtime component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: mpich
+Requires: mpich%{?_isa}
 BuildRequires: mpich-devel
-Requires: boost-serialization = %{version}-%{release}
+Requires: boost-serialization%{?_isa} = %{version}-%{release}
 Obsoletes: boost-mpich2 < 1.41.0-25
 
 %description mpich
@@ -379,10 +388,10 @@ API over the MPICH implementation of MPI.
 %package mpich-devel
 Summary: Shared library symlinks for Boost.MPI
 Group: System Environment/Libraries
-Requires: boost-devel = %{version}-%{release}
-Requires: boost-mpich = %{version}-%{release}
-Requires: boost-mpich-python = %{version}-%{release}
-Requires: boost-graph-mpich = %{version}-%{release}
+Requires: boost-devel%{?_isa} = %{version}-%{release}
+Requires: boost-mpich%{?_isa} = %{version}-%{release}
+Requires: boost-mpich-python%{?_isa} = %{version}-%{release}
+Requires: boost-graph-mpich%{?_isa} = %{version}-%{release}
 Obsoletes: boost-mpich2-devel < 1.41.0-25
 
 %description mpich-devel
@@ -393,9 +402,9 @@ API over the MPICH implementation of MPI.
 %package mpich-python
 Summary: Python runtime component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: boost-mpich = %{version}-%{release}
-Requires: boost-python = %{version}-%{release}
-Requires: boost-serialization = %{version}-%{release}
+Requires: boost-mpich%{?_isa} = %{version}-%{release}
+Requires: boost-python%{?_isa} = %{version}-%{release}
+Requires: boost-serialization%{?_isa} = %{version}-%{release}
 Obsoletes: boost-mpich2-python < 1.41.0-25
 
 %description mpich-python
@@ -406,8 +415,8 @@ API over the MPICH implementation of MPI.
 %package graph-mpich
 Summary: Runtime component of parallel boost graph library
 Group: System Environment/Libraries
-Requires: boost-mpich = %{version}-%{release}
-Requires: boost-serialization = %{version}-%{release}
+Requires: boost-mpich%{?_isa} = %{version}-%{release}
+Requires: boost-serialization%{?_isa} = %{version}-%{release}
 Obsoletes: boost-graph-mpich2 < 1.41.0-25
 
 %description graph-mpich
@@ -442,6 +451,9 @@ sed 's/_FEDORA_SONAME/%{sonamever}/' %{PATCH0} | %{__patch} -p0 --fuzz=0
 %patch16 -p2
 %patch17 -p2
 %patch18 -p2
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
 
 %build
 # Support for building tests.
@@ -818,6 +830,21 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 %endif
 
 %changelog
+* Wed Feb  4 2015 Petr Machata <pmachata@redhat.com> - 1.41.0-27
+- Fix the way MPI_VERSION is compared with (>=2 rather than ==2) so
+  that an arg-less boost::mpi::environment ctor is exposed for MPI
+  libraries with MPI_VERSION of 3.
+  (boost-1.41.0-mpi-NOARG_INIT.patch)
+- Fix boost::interprocess::move (boost-1.41.0-interprocess-move.patch)
+- Fix copy construction of boost::weak_ptr
+  (boost-1.41.0-weak_ptr-copy.patch)
+- Undo the change of non-Requires: package references to not use
+  %%{?_isa} again.
+
+* Thu Jan  8 2015 Petr Machata <pmachata@redhat.com> - 1.41.0-26
+- Change Requires: and other package references to use %%{?_isa}, so
+  that dependencies are arch-aware.
+
 * Thu Aug 21 2014 Michal Schmidt <mschmidt@redhat.com> - 1.41.0-25
 - mpich obsoleted mpich2. Build against mpich and rename subpackages
   accordingly. Obsolete mpich2 subpackages.
@@ -1047,7 +1074,7 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 - Fix rpmlint warnings on tabs and spaces.
 - Bump SONAME to 4
 
-* Tue Nov 17 2008 Benjamin Kosnik <bkoz@redhat.com> - 1.37.0-0.1
+* Mon Nov 17 2008 Benjamin Kosnik <bkoz@redhat.com> - 1.37.0-0.1
 - Rebase to 1.37.0.
 
 * Tue Oct 21 2008 Benjamin Kosnik <bkoz@redhat.com> - 1.36.0-1
