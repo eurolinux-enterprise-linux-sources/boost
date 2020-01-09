@@ -12,10 +12,10 @@
 
 # Configuration of MPI backends
 %ifnarch %{ix86} x86_64
-  # No MPICH2 support except on x86 and x86_64
-  %bcond_with mpich2
+  # No MPICH support except on x86 and x86_64
+  %bcond_with mpich
 %else
-  %bcond_without mpich2
+  %bcond_without mpich
 %endif
 
 %ifarch s390 s390x
@@ -28,12 +28,13 @@
 Name: boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.41.0
-Release: 18%{?dist}
+Release: 25%{?dist}
 License: Boost
 URL: http://sodium.resophonic.com/boost-cmake/%{version}.cmake0/
 Group: System Environment/Libraries
 %define full_version %{name}-%{version}.cmake0
-Source: %{url}/%{full_version}.tar.gz
+Source0: %{url}/%{full_version}.tar.gz
+Source1: __init__.py
 
 # From the version 13 of Fedora, the Boost libraries are delivered
 # with sonames equal to the Boost version (e.g., 1.41.0).  On older
@@ -96,6 +97,29 @@ Patch6: boost-1.41.0-exception_ptr.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=820670
 # (https://bugzilla.redhat.com/show_bug.cgi?id=771370)
 Patch7: boost-1.48.0-mathlib.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1021004
+Patch8: boost-1.41.0-serialization-leak.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=969183
+Patch9: boost-1.41.0-gthreads.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=801534
+Patch10: boost-1.41.0-mpi-python.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1108268
+Patch11: boost-1.41.0-shared_ptr-deleted-copy.patch
+
+# Make Boost.Thread work with recent GCC and C++11
+Patch12: boost-1.41.0-thread-rvalue-fixes.patch
+
+# Fix standard conformance problems
+Patch13: boost-1.41.0-interprocess-conformance.patch
+Patch14: boost-1.41.0-intrusive-conformance.patch
+Patch15: boost-1.41.0-graph-conformance.patch
+Patch16: boost-1.41.0-interprocess-conformance-maxval.patch
+Patch17: boost-1.41.0-circular_buffer-adl.patch
+Patch18: boost-1.41.0-numeric-conformance.patch
 
 %bcond_with tests
 %bcond_with docs_generated
@@ -337,56 +361,60 @@ backend to do the parallel work.
 %endif
 
 
-%if %{with mpich2}
+%if %{with mpich}
 
-%package mpich2
+%package mpich
 Summary: Runtime component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: mpich2
-BuildRequires: mpich2-devel
+Requires: mpich
+BuildRequires: mpich-devel
 Requires: boost-serialization = %{version}-%{release}
+Obsoletes: boost-mpich2 < 1.41.0-25
 
-%description mpich2
+%description mpich
 
-Runtime support for Boost.MPI-MPICH2, a library providing a clean C++
-API over the MPICH2 implementation of MPI.
+Runtime support for Boost.MPI-MPICH, a library providing a clean C++
+API over the MPICH implementation of MPI.
 
-%package mpich2-devel
+%package mpich-devel
 Summary: Shared library symlinks for Boost.MPI
 Group: System Environment/Libraries
 Requires: boost-devel = %{version}-%{release}
-Requires: boost-mpich2 = %{version}-%{release}
-Requires: boost-mpich2-python = %{version}-%{release}
-Requires: boost-graph-mpich2 = %{version}-%{release}
+Requires: boost-mpich = %{version}-%{release}
+Requires: boost-mpich-python = %{version}-%{release}
+Requires: boost-graph-mpich = %{version}-%{release}
+Obsoletes: boost-mpich2-devel < 1.41.0-25
 
-%description mpich2-devel
+%description mpich-devel
 
-Devel package for Boost.MPI-MPICH2, a library providing a clean C++
-API over the MPICH2 implementation of MPI.
+Devel package for Boost.MPI-MPICH, a library providing a clean C++
+API over the MPICH implementation of MPI.
 
-%package mpich2-python
+%package mpich-python
 Summary: Python runtime component of Boost.MPI library
 Group: System Environment/Libraries
-Requires: boost-mpich2 = %{version}-%{release}
+Requires: boost-mpich = %{version}-%{release}
 Requires: boost-python = %{version}-%{release}
 Requires: boost-serialization = %{version}-%{release}
+Obsoletes: boost-mpich2-python < 1.41.0-25
 
-%description mpich2-python
+%description mpich-python
 
-Python support for Boost.MPI-MPICH2, a library providing a clean C++
-API over the MPICH2 implementation of MPI.
+Python support for Boost.MPI-MPICH, a library providing a clean C++
+API over the MPICH implementation of MPI.
 
-%package graph-mpich2
+%package graph-mpich
 Summary: Runtime component of parallel boost graph library
 Group: System Environment/Libraries
-Requires: boost-mpich2 = %{version}-%{release}
+Requires: boost-mpich = %{version}-%{release}
 Requires: boost-serialization = %{version}-%{release}
+Obsoletes: boost-graph-mpich2 < 1.41.0-25
 
-%description graph-mpich2
+%description graph-mpich
 
 Runtime support for the Parallel BGL graph library.  The interface and
 graph components are generic, in the same sense as the the Standard
-Template Library (STL).  This libraries in this package use MPICH2
+Template Library (STL).  This libraries in this package use MPICH
 backend to do the parallel work.
 
 %endif
@@ -403,6 +431,17 @@ sed 's/_FEDORA_SONAME/%{sonamever}/' %{PATCH0} | %{__patch} -p0 --fuzz=0
 %patch5 -p1
 %patch6 -p0
 %patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p0
+%patch12 -p0
+%patch13 -p2
+%patch14 -p2
+%patch15 -p2
+%patch16 -p2
+%patch17 -p2
+%patch18 -p2
 
 %build
 # Support for building tests.
@@ -440,9 +479,9 @@ export MPI_COMPILER
 %{_openmpi_unload}
 %endif
 
-# Build MPI parts of Boost with MPICH2 support
-%if %{with mpich2}
-%{_mpich2_load}
+# Build MPI parts of Boost with MPICH support
+%if %{with mpich}
+%{_mpich_load}
 ( echo ============================= build $MPI_COMPILER ==================
   mkdir $MPI_COMPILER
   cd $MPI_COMPILER
@@ -452,7 +491,7 @@ export MPI_COMPILER
          -DBOOST_LIB_INSTALL_DIR=$MPI_LIB ..
   make VERBOSE=1 %{?_smp_mflags}
 )
-%{_mpich2_unload}
+%{_mpich_unload}
 %endif
 
 
@@ -462,24 +501,6 @@ cd build
 
 # Standard test with CMake, depends on installed boost-test.
 ctest --verbose --output-log testing.log
-if [ -f testing.log ]; then
-  echo "" >> testing.log
-  echo `date` >> testing.log
-  echo "" >> testing.log
-  echo `uname -a` >> testing.log
-  echo "" >> testing.log
-  echo `g++ --version` >> testing.log
-  echo "" >> testing.log
-  testdate=`date +%Y%m%d`
-  testarch=`uname -m`
-  email=benjamin.kosnik@gmail.com
-  bzip2 -f testing.log
-  echo "sending results starting"
-  echo | mutt -s "$testdate boost test $testarch" -a testing.log.bz2 $email
-  echo "sending results finished"
-else
-  echo "error with results"
-fi
 cd %{_builddir}/%{full_version}
 %endif
 
@@ -498,12 +519,13 @@ echo ============================= install $MPI_COMPILER ==================
 DESTDIR=$RPM_BUILD_ROOT make -C $MPI_COMPILER VERBOSE=1 install
 # Remove parts of boost that we don't want installed in MPI directory.
 %{__rm} -f $RPM_BUILD_ROOT/$MPI_LIB/libboost_{python,{w,}serialization}*
-# Suppress the mpi.so python module, as it not currently properly
-# generated (some dependencies are missing. It is temporary until
-# upstream Boost-CMake fixes that (see
-# http://lists.boost.org/boost-cmake/2009/12/0859.php for more
-# details)
-%{__rm} -f $RPM_BUILD_ROOT/$MPI_LIB/mpi.so
+
+# Install Boost-MPI Python module.  OpenMPI needs __init__.py that
+# adds RTLD_GLOBAL to dlopen flags.
+%{__install} -m 755 -d ${RPM_BUILD_ROOT}${MPI_PYTHON_SITEARCH}/boost
+%{__mv} $RPM_BUILD_ROOT/$MPI_LIB/mpi.so ${RPM_BUILD_ROOT}${MPI_PYTHON_SITEARCH}/boost/
+%{__install} %{SOURCE1} ${RPM_BUILD_ROOT}${MPI_PYTHON_SITEARCH}/boost/
+
 # Kill any debug library versions that may show up un-invited.
 %{__rm} -f $RPM_BUILD_ROOT/$MPI_LIB/*-d.*
 # Remove cmake configuration files used to build the Boost libraries
@@ -511,23 +533,30 @@ find $RPM_BUILD_ROOT/$MPI_LIB -name '*.cmake' -exec %{__rm} -f {} \;
 %{_openmpi_unload}
 %endif
 
-%if %{with mpich2}
-%{_mpich2_load}
+%if %{with mpich}
+%{_mpich_load}
 echo ============================= install $MPI_COMPILER ==================
 DESTDIR=$RPM_BUILD_ROOT make -C $MPI_COMPILER VERBOSE=1 install
 # Remove parts of boost that we don't want installed in MPI directory.
 %{__rm} -f $RPM_BUILD_ROOT/$MPI_LIB/libboost_{python,{w,}serialization}*
-# Suppress the mpi.so python module, as it not currently properly
-# generated (some dependencies are missing. It is temporary until
-# upstream Boost-CMake fixes that (see
-# http://lists.boost.org/boost-cmake/2009/12/0859.php for more
-# details)
-%{__rm} -f $RPM_BUILD_ROOT/$MPI_LIB/mpi.so
+
+# The MPICH module sets odd MPI_PYTHON_SITEARCH, override it.
+if echo $MPI_PYTHON_SITEARCH | grep mpich/bin; then
+   export MPI_PYTHON_SITEARCH=%{python_sitearch}/mpich
+fi
+
+# Install Boost-MPI Python module.  MPICH doesn't need the __init__.py
+# magic.
+%{__install} -m 755 -d ${RPM_BUILD_ROOT}${MPI_PYTHON_SITEARCH}/boost
+%{__mv} $RPM_BUILD_ROOT/$MPI_LIB/mpi.so ${RPM_BUILD_ROOT}${MPI_PYTHON_SITEARCH}/boost/
+echo > __init__.py
+%{__install} __init__.py ${RPM_BUILD_ROOT}${MPI_PYTHON_SITEARCH}/boost/
+
 # Kill any debug library versions that may show up un-invited.
 %{__rm} -f $RPM_BUILD_ROOT/$MPI_LIB/*-d.*
 # Remove cmake configuration files used to build the Boost libraries
 find $RPM_BUILD_ROOT/$MPI_LIB -name '*.cmake' -exec %{__rm} -f {} \;
-%{_mpich2_unload}
+%{_mpich_unload}
 %endif
 
 echo ============================= install serial ==================
@@ -725,8 +754,8 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 %defattr(-, root, root, -)
 %doc LICENSE_1_0.txt
 %{_libdir}/*.a
-%if %{with mpich2}
-%{_libdir}/mpich2/lib/*.a
+%if %{with mpich}
+%{_libdir}/mpich/lib/*.a
 %endif
 %if %{with openmpi}
 %{_libdir}/openmpi/lib/*.a
@@ -750,6 +779,7 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 %defattr(-, root, root, -)
 %doc LICENSE_1_0.txt
 %{_libdir}/openmpi/lib/libboost_mpi_python*.so.%{sonamever}
+%{python_sitearch}/openmpi/boost
 
 %files graph-openmpi
 %defattr(-, root, root, -)
@@ -759,34 +789,72 @@ sed -i '/^include/s,"\(.*\)\(/Boost.cmake\)","\1/boost\2",' \
 
 %endif
 
-# MPICH2 packages
-%if %{with mpich2}
+# MPICH packages
+%if %{with mpich}
 
-%files mpich2
+%files mpich
 %defattr(-, root, root, -)
 %doc LICENSE_1_0.txt
-%{_libdir}/mpich2/lib/libboost_mpi.so.%{sonamever}
-%{_libdir}/mpich2/lib/libboost_mpi-mt.so.%{sonamever}
+%{_libdir}/mpich/lib/libboost_mpi.so.%{sonamever}
+%{_libdir}/mpich/lib/libboost_mpi-mt.so.%{sonamever}
 
-%files mpich2-devel
+%files mpich-devel
 %defattr(-, root, root, -)
 %doc LICENSE_1_0.txt
-%{_libdir}/mpich2/lib/libboost_*.so
+%{_libdir}/mpich/lib/libboost_*.so
 
-%files mpich2-python
+%files mpich-python
 %defattr(-, root, root, -)
 %doc LICENSE_1_0.txt
-%{_libdir}/mpich2/lib/libboost_mpi_python*.so.%{sonamever}
+%{_libdir}/mpich/lib/libboost_mpi_python*.so.%{sonamever}
+%{python_sitearch}/mpich/boost
 
-%files graph-mpich2
+%files graph-mpich
 %defattr(-, root, root, -)
 %doc LICENSE_1_0.txt
-%{_libdir}/mpich2/lib/libboost_graph_parallel.so.%{sonamever}
-%{_libdir}/mpich2/lib/libboost_graph_parallel-mt.so.%{sonamever}
+%{_libdir}/mpich/lib/libboost_graph_parallel.so.%{sonamever}
+%{_libdir}/mpich/lib/libboost_graph_parallel-mt.so.%{sonamever}
 
 %endif
 
 %changelog
+* Thu Aug 21 2014 Michal Schmidt <mschmidt@redhat.com> - 1.41.0-25
+- mpich obsoleted mpich2. Build against mpich and rename subpackages
+  accordingly. Obsolete mpich2 subpackages.
+
+* Mon Jun 23 2014 Petr Machata <pmachata@redhat.com> - 1.41.0-24
+- Fix conformance problems in Boost.Numeric (uBLAS) and
+  Boost.CircularBuffer (boost-1.41.0-numeric-conformance.patch,
+  boost-1.41.0-circular_buffer-adl.patch)
+
+* Mon Jun 23 2014 Petr Machata <pmachata@redhat.com> - 1.41.0-23
+- Fix conformance problems in Boost.Interprocess, Boost.Intrusive and
+  Boost.Graph
+  (boost-1.41.0-graph-conformance.patch,
+  boost-1.41.0-interprocess-conformance.patch,
+  boost-1.41.0-interprocess-conformance-maxval.patch,
+  boost-1.41.0-intrusive-conformance.patch)
+
+* Thu Jun 12 2014 Jonathan Wakely <jwakely@redhat.com> - 1.41.0-23
+- Make Boost.Thread work with recent GCC and C++11.
+  (boost-1.41.0-thread-rvalue-fixes.patch)
+
+* Thu Jun 12 2014 Jonathan Wakely <jwakely@redhat.com> - 1.41.0-22
+- Fix shared_ptr to work with recent GCC and C++11.
+  (boost-1.41.0-shared_ptr-deleted-copy.patch)
+- Resolves: #1108268
+
+* Fri May 30 2014 Petr Machata <pmachata@redhat.com> - 1.41.0-21
+- Fix building of Python module for Boost-MPI and ship it
+  (boost-1.41.0-mpi-python.patch, __init__.py)
+
+* Tue Apr 29 2014 Petr Machata <pmachata@redhat.com> - 1.41.0-20
+- Add an upstream patch for BOOST_ENABLE_THREADS
+
+* Wed Dec 11 2013 Petr Machata <pmachata@redhat.com> - 1.41.0-19
+- Backport upstream patch for fixing of memory leaks in
+  Boost.Serialization (boost-1.41.0-serialization-leak.patch)
+
 * Tue Jun  4 2013 Petr Machata <pmachata@redhat.com> - 1.41.0-18
 - Build math portion of Boost.TR1, package DSOs in boost-math.
   (boost-1.48.0-mathlib.patch)
