@@ -34,7 +34,7 @@ Name: boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.53.0
 %define version_enc 1_53_0
-Release: 25%{?dist}
+Release: 26%{?dist}
 License: Boost and MIT and Python
 
 %define toplev_dirname %{name}_%{version_enc}
@@ -75,14 +75,14 @@ Requires: boost-thread%{?_isa} = %{version}-%{release}
 Requires: boost-timer%{?_isa} = %{version}-%{release}
 Requires: boost-wave%{?_isa} = %{version}-%{release}
 
-BuildRequires: libstdc++-devel%{?_isa}
-BuildRequires: bzip2-devel%{?_isa}
-BuildRequires: zlib-devel%{?_isa}
-BuildRequires: python-devel%{?_isa}
+BuildRequires: libstdc++-devel
+BuildRequires: bzip2-devel
+BuildRequires: zlib-devel
+BuildRequires: python-devel
 %if %{with python3}
-BuildRequires: python3-devel%{?_isa}
+BuildRequires: python3-devel
 %endif
-BuildRequires: libicu-devel%{?_isa}
+BuildRequires: libicu-devel
 BuildRequires: chrpath
 
 # https://svn.boost.org/trac/boost/ticket/6150
@@ -211,6 +211,16 @@ Patch56: boost-1.54.0-interprocess-atomic_cas32-ppc.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1134058
 # https://svn.boost.org/trac/boost/ticket/7421
 Patch57: boost-1.53.0-lexical_cast.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1298227
+# https://github.com/boostorg/asio/pull/23
+Patch58: boost-1.53.0-no-ssl3.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1302120
+Patch61: boost-1.53.0-python-libpython_dep.patch
+Patch62: boost-1.53.0-python-abi_letters.patch
+Patch63: boost-1.53.0-python-test-PyImport_AppendInittab.patch
+Patch64: boost-1.53.0-no-rpath.patch
 
 %bcond_with tests
 %bcond_with docs_generated
@@ -675,9 +685,14 @@ a number of significant features and is now developed independently
 %patch52 -p1
 %patch53 -p1
 %patch54 -p1
-%patch55 -p1
+%patch55 -p1 -b .buildflags
 %patch56 -p1
 %patch57 -p2
+%patch58 -p1
+%patch61 -p1
+%patch62 -p1
+%patch63 -p1
+%patch64 -p1
 
 # At least python2_version needs to be a macro so that it's visible in
 # %%install as well.
@@ -698,11 +713,13 @@ cat >> ./tools/build/v2/user-config.jam << EOF
 # There are many strict aliasing warnings, and it's not feasible to go
 # through them all at this time.
 using gcc : : : <compileflags>"$RPM_OPT_FLAGS -fno-strict-aliasing" ;
+%if %{with openmpi} || %{with mpich}
 using mpi ;
+%endif
 %if %{with python3}
 # This _adds_ extra python version.  It doesn't replace whatever
 # python 2.X is default on the system.
-using python : %{python3_version} : /usr/bin/python3 : /usr/include/python%{python3_version}%{python3_abiflags} ;
+using python : %{python3_version} : /usr/bin/python3 : /usr/include/python%{python3_version}%{python3_abiflags} : : : : %{python3_abiflags} ;
 %endif
 EOF
 
@@ -856,6 +873,8 @@ echo ============================= install Boost.Build ==================
  rm -f $RPM_BUILD_ROOT%{_datadir}/boost-build/tools/doxygen/windows-paths-check.hpp
  # Install the manual page
  %{__install} -p -m 644 doc/bjam.1 -D $RPM_BUILD_ROOT%{_mandir}/man1/bjam.1
+ # Install the unpatched gcc.jam
+ %{__install} -p -m 644 tools/gcc.jam.buildflags -D $RPM_BUILD_ROOT%{_datadir}/boost-build/tools/gcc.jam
 )
 
 # Install documentation files (HTML pages) within the temporary place
@@ -1249,6 +1268,21 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/bjam.1*
 
 %changelog
+* Fri Jun 10 2016 Jonathan Wakely <jwakely@redhat.com> - 1.53.0-26
+- Install unpatched gcc.jam (#1305019).
+- Build libboost_python and libboost_python3 such that they depend on
+  their respective libpython (#1302120).
+  (boost-1.53.0-python-libpython_dep.patch,
+  boost-1.53.0-python-abi_letters.patch)
+- Fix Boost.Python test suite so that PyImport_AppendInittab is called
+  before PyInitialize, which broke the test suite with Python 3.
+  (boost-1.53.0-python-test-PyImport_AppendInittab.patch)
+- Patch gcc.jam to not add bogus rpaths.
+
+* Mon Jun 06 2016 Jonathan Wakely <jwakely@redhat.com> - 1.53.0-26
+- do not use arch-specific BuildRequires (#1268268)
+- support TLS libraries without SSLv3 (#1298227)
+
 * Tue Sep 01 2015 Jonathan Wakely <jwakely@redhat.com> - 1.53.0-25
 - Rebuilt for openmpi update (#1258794)
 
