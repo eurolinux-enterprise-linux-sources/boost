@@ -34,7 +34,7 @@ Name: boost
 Summary: The free peer-reviewed portable C++ source libraries
 Version: 1.53.0
 %define version_enc 1_53_0
-Release: 26%{?dist}
+Release: 27%{?dist}
 License: Boost and MIT and Python
 
 %define toplev_dirname %{name}_%{version_enc}
@@ -221,6 +221,9 @@ Patch61: boost-1.53.0-python-libpython_dep.patch
 Patch62: boost-1.53.0-python-abi_letters.patch
 Patch63: boost-1.53.0-python-test-PyImport_AppendInittab.patch
 Patch64: boost-1.53.0-no-rpath.patch
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1402516
+Patch70: boost-1.53-spirit-lexer.patch
 
 %bcond_with tests
 %bcond_with docs_generated
@@ -693,6 +696,7 @@ a number of significant features and is now developed independently
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
+%patch70 -p2
 
 # At least python2_version needs to be a macro so that it's visible in
 # %%install as well.
@@ -1268,6 +1272,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/bjam.1*
 
 %changelog
+* Tue Feb 21 2017 Jonathan Wakely <jwakely@redhat.com> - 1.53.0-27
+- Patch Boost.Spirit for ppc64 (#1402516)
+
 * Fri Jun 10 2016 Jonathan Wakely <jwakely@redhat.com> - 1.53.0-26
 - Install unpatched gcc.jam (#1305019).
 - Build libboost_python and libboost_python3 such that they depend on
